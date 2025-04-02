@@ -1,0 +1,159 @@
+// Services/ADUserService.cs
+using System.IO;
+using System.Text.Json;
+using System.DirectoryServices.AccountManagement;
+
+public class ADUserService : PasswordUserService
+{
+    private readonly string _configPath;
+    private readonly ILogger<ADUserService> _logger;
+    private readonly object _fileLock = new object();
+
+    public ADUserService(IConfiguration configuration, ILogger<ADUserService> logger)
+    {
+        _configPath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.users");
+        _logger = logger;
+    }
+
+    private List<ADUser> ReadUsers()
+    {
+        lock (_fileLock)
+        {
+            try
+            {
+                _logger.LogInformation($"Reading from: {_configPath}");
+                if (!File.Exists(_configPath))
+                {
+                    _logger.LogWarning("Users file not found. Creating empty users list.");
+                    return new List<ADUser>();
+                }
+
+                var lines = File.ReadAllLines(_configPath);
+                var users = new List<ADUser>();
+
+                foreach (var line in lines)
+                {
+                    var parts = line.Split(';');
+                    if (parts.Length >= 3)
+                    {
+                        users.Add(new ADUser
+                        {
+                            Id = users.Count + 1,
+                            DomainUsername = parts[0],
+                            FullName = parts[1],
+                            Role = parts[2],
+                            IsActive = true,
+                            CreatedDate = DateTime.Now,
+                            LastLoginDate = null
+                        });
+                    }
+                }
+
+                _logger.LogInformation($"Loaded {users.Count} users");
+                return users;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reading users");
+                return new List<ADUser>();
+            }
+        }
+    }
+
+    private void WriteUsers(List<ADUser> users)
+    {
+        lock (_fileLock)
+        {
+            try
+            {
+                var lines = users.Select(u => $"{u.DomainUsername};{u.FullName};{u.Role}");
+                File.WriteAllLines(_configPath, lines);
+                _logger.LogInformation($"Wrote {users.Count} users to file");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error writing users");
+            }
+        }
+    }
+
+    public ADUser AuthenticateUser(string domainUsername)
+    {
+        var users = ReadUsers();
+        var user = users.FirstOrDefault(u => 
+            u.DomainUsername.Equals(domainUsername, StringComparison.OrdinalIgnoreCase) &&
+            u.IsActive);
+
+        if (user != null)
+        {
+            user.LastLoginDate = DateTime.Now;
+            WriteUsers(users);
+        }
+        return user;
+    }
+
+    public bool AddUser(ADUser user)
+    {
+        var users = ReadUsers();
+        user.Id = users.Count > 0 ? users.Max(u => u.Id) + 1 : 1;
+        user.IsActive = true;
+        user.CreatedDate = DateTime.Now;
+        user.LastLoginDate = null;
+        users.Add(user);
+        WriteUsers(users);
+        return true;
+    }
+
+    public bool RemoveUser(string domainUsername)
+    {
+        var users = ReadUsers();
+        var userToRemove = users.FirstOrDefault(u =>
+            u.DomainUsername.Equals(domainUsername, StringComparison.OrdinalIgnoreCase));
+
+        if (userToRemove != null)
+        {
+            users.Remove(userToRemove);
+            WriteUsers(users);
+            return true;
+        }
+        return false;
+    }
+
+    public bool UpdateUserRole(string domainUsername, string role)
+    {
+        var users = ReadUsers();
+        var user = users.FirstOrDefault(u => u.DomainUsername.Equals(domainUsername, StringComparison.OrdinalIgnoreCase));
+        if (user != null)
+        {
+            user.Role = role;
+            WriteUsers(users);
+            return true;
+        }
+        return false;
+    }
+
+    public bool ActivateUser(string domainUsername)
+    {
+        var users = ReadUsers();
+        var user = users.FirstOrDefault(u => u.DomainUsername.Equals(domainUsername, StringComparison.OrdinalIgnoreCase));
+        if (user != null)
+        {
+            user.IsActive = true;
+            WriteUsers(users);
+            return true;
+        }
+        return false;
+    }
+
+    public List<ADUser> GetAllUsers()
+    {
+        return ReadUsers();
+    }
+
+    public string GetCurrentUserName()
+    {
+        // Get the current Windows identity
+        var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+        return identity?.Name;
+    }
+}
