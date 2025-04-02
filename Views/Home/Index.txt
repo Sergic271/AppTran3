@@ -1,0 +1,265 @@
+@{
+    ViewData["Title"] = "Application Transfer";
+}
+<style>
+    #searchResults {
+        max-height: 400px;
+        overflow-y: auto;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .dropdown-header {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background-color: #f8f9fa;
+        width: 100%;
+    }
+
+    .dropdown-item {
+        white-space: normal;
+        padding: 0.4rem;
+        width: 100%;
+    }
+
+    .search-row {
+        display: grid;
+        grid-template-columns: 280px 200px 130px 200px;
+        gap: 6px;
+        align-items: start;
+        width: 100%;
+    }
+
+    .search-col {
+        padding: 0 4px;
+        font-size: 0.7rem;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        position: relative;
+    }
+
+    .tooltip {
+        position: relative;
+        display: inline-block;
+    }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            background-color: black;
+            color: white;
+            text-align: center;
+            padding: 5px;
+            border-radius: 6px;
+            position: absolute;
+            z-index: 1;
+            width: max-content;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+    .dropdown-header .search-col {
+        font-weight: bold;
+        font-size: 0.75rem;
+    }
+
+    #applicationNumber {
+        position: relative;
+        z-index: 2;
+    }
+
+    .form-group {
+        position: relative;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 3;
+            background: white;
+        }
+</style>
+<div class="container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="col-md-9">
+        <div class="form-group mb-3">
+            <label for="applicationNumber">Application numbers</label>
+            <input type="text" id="applicationNumber" class="form-control"
+                   placeholder="Enter application numbers separated by spaces" />
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="transferTo">Whom to transfer</label>
+            <input type="text" id="transferTo" class="form-control" autocomplete="off" />
+            <div id="searchResults" class="dropdown-menu w-100">
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button id="submitButton" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+<script type="text/javascript">
+jQuery(function ($) {
+var lastValue = '';
+var searchTimeout;
+var currentRequest;
+var currentYear = new Date().getFullYear();
+
+            // Input Handlers
+            $('#applicationNumber').on('keypress', function (e) {
+                var char = String.fromCharCode(e.which);
+                var currentValue = this.value;
+                var numbers = currentValue.split(' ');
+                var currentNumber = numbers[numbers.length - 1] || '';
+
+                if (!/[\d\s]/.test(char)) {
+                    e.preventDefault();
+                    return;
+                }
+
+                if (char === ' ') {
+                    if (currentNumber.length === 10) {
+                        return;
+                    }
+                    e.preventDefault();
+                    return;
+                }
+
+                if (/\d/.test(char)) {
+                    if (!currentNumber) {
+                        if (char !== '2') {
+                            e.preventDefault();
+                        }
+                    }
+                    else if (currentNumber.length === 1) {
+                        if (char !== '0') {
+                            e.preventDefault();
+                        }
+                    }
+                    else if (currentNumber.length === 2) {
+                        var currentYearThirdDigit = parseInt(currentYear.toString()[2]);
+                        if (parseInt(char) > currentYearThirdDigit) {
+                            e.preventDefault();
+                        }
+                    }
+                    else if (currentNumber.length === 3) {
+                        var potentialYear = parseInt(currentNumber + char);
+                        if (potentialYear > currentYear) {
+                            e.preventDefault();
+                        }
+                    }
+                    else if (currentNumber.length === 4) {
+                        if (!['1', '5', '7', '8'].includes(char)) {
+                            e.preventDefault();
+                        }
+                    }
+                    else if (currentNumber.length >= 10) {
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            $('#applicationNumber').on('input', function () {
+                var currentValue = this.value;
+                var hasTrailingSpace = currentValue.endsWith(' ');
+                var numbers = Array.from(new Set(currentValue.split(' ').filter(n => n)));
+                this.value = numbers.join(' ') + (hasTrailingSpace ? ' ' : '');
+            });
+
+            $('#applicationNumber').on('paste', function (e) {
+                e.preventDefault();
+
+                var pastedText = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
+                var currentValue = $(this).val();
+                var allText = currentValue + ' ' + pastedText;
+
+                var numbers = Array.from(new Set(
+                    allText.replace(/\s+/g, ' ')
+                        .trim()
+                        .split(' ')
+                        .filter(n => n)
+                ));
+
+                $(this).val(numbers.join(' '));
+            });
+
+            $('#transferTo').on('input', function () {
+                clearTimeout(searchTimeout);
+
+                if (currentRequest && currentRequest.state() === 'pending') {
+                    currentRequest.abort();
+                }
+
+                var searchText = $(this).val();
+
+                searchTimeout = setTimeout(function () {
+                    if (searchText.length > 0) {
+                        currentRequest = $.get('/Home/SearchApplicants', { searchText: searchText })
+                            .done(function (result) {
+                                var resultHtml = `
+                                        <div class="dropdown-header p-2">
+                                            <div class="search-row">
+                                                <div class="search-col"><strong>Name</strong></div>
+                                                <div class="search-col"><strong>Mail</strong></div>
+                                                <div class="search-col"><strong>OGRN</strong></div>
+                                                <div class="search-col"><strong>Status</strong></div>
+                                            </div>
+                                        </div>`;
+
+                                if (result && result.length > 0) {
+                                    result.forEach(function (item) {
+                                        resultHtml += `
+                                                <a class="dropdown-item" href="#">
+                                                    <div class="search-row">
+                                                        <div class="search-col" title="${item.name}">${item.name}</div>
+                                                        <div class="search-col" title="${item.mail}">${item.mail}</div>
+                                                        <div class="search-col tooltip">
+                                                            ${item.ogrn ? item.ogrn : 'No'}
+                                                            <span class="tooltiptext">${item.company ? item.company : 'Person'}</span>
+                                                        </div>
+                                                        <div class="search-col" title="${item.certificateStatus}">
+                                                            ${item.certificateStatus || ''}
+                                                        </div>
+                                                    </div>
+                                                </a>`;
+                                    });
+                                } else {
+                                    resultHtml += `
+                                            <div class="dropdown-item">
+                                                No results found
+                                            </div>`;
+                                }
+
+                                $('#searchResults').html(resultHtml).show();
+                            })
+                            .fail(function (error) {
+                                console.error('Search failed:', error);
+                            });
+                    } else {
+                        $('#searchResults').hide();
+                    }
+                }, 300);
+            });
+
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('.form-group').length) {
+                    $('#searchResults').hide();
+                }
+            });
+        });
+    </script>

@@ -1,0 +1,149 @@
+using System.Text.Json;
+
+public class UserService : IUserService
+{
+    private readonly string _configPath;
+    private readonly ILogger<UserService> _logger;
+    private readonly object _fileLock = new object();
+
+    public UserService(IConfiguration configuration, ILogger<UserService> logger)
+    {
+        _configPath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.users.json");
+        _logger = logger;
+    }
+
+    private List<CertificateUser> ReadUsers()
+    {
+        lock (_fileLock)
+        {
+            try
+            {
+                _logger.LogInformation($"Reading from: {_configPath}");
+                var json = File.ReadAllText(_configPath);
+                _logger.LogInformation($"JSON content: {json}");
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = true
+                };
+
+                var config = JsonSerializer.Deserialize<UserConfig>(json, options);
+                _logger.LogInformation($"Deserialized users count: {config?.Users?.Count}");
+
+                foreach (var user in config.Users)
+                {
+                    _logger.LogInformation($"User: {user.FullName}, Fingerprint: {user.Fingerprint}, Active: {user.IsActive}");
+                }
+
+                return config.Users;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reading users");
+                throw;
+            }
+        }
+    }
+
+    private int GetNextId()
+    {
+        var users = ReadUsers();
+        return users.Count > 0 ? users.Max(u => u.Id) + 1 : 1;
+    }
+
+
+    private void WriteUsers(List<CertificateUser> users)
+    {
+        lock (_fileLock)
+        {
+            var config = new UserConfig { Users = users };
+            var json = JsonSerializer.Serialize(config, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+            File.WriteAllText(_configPath, json);
+        }
+    }
+
+
+
+
+    public CertificateUser AuthenticateUser(string fingerprint)
+    {
+        var users = ReadUsers();
+        var user = users.FirstOrDefault(u =>
+            u.Fingerprint.Equals(fingerprint, StringComparison.OrdinalIgnoreCase) &&
+            u.IsActive);
+
+        if (user != null)
+        {
+            user.LastLoginDate = DateTime.Now;
+            WriteUsers(users);
+        }
+        return user;
+    }
+
+    public bool AddUser(CertificateUser user)
+    {
+        var users = ReadUsers();
+        user.Id = GetNextId();
+        user.Fingerprint = user.Fingerprint?.Trim().Replace("\u200E", ""); // Remove left-to-right mark
+        user.LastLoginDate = null;
+        users.Add(user);
+        WriteUsers(users);
+        return true;
+    }
+
+    public bool ActivateUser(string fingerprint)
+    {
+        var users = ReadUsers();
+        var user = users.FirstOrDefault(u => u.Fingerprint == fingerprint);
+        if (user != null)
+        {
+            user.IsActive = true;
+            WriteUsers(users);
+            return true;
+        }
+        return false;
+    }
+
+    public bool RemoveUser(string fingerprint)
+    {
+        var users = ReadUsers();
+        var userToRemove = users.FirstOrDefault(u =>
+            u.Fingerprint.Equals(fingerprint, StringComparison.OrdinalIgnoreCase));
+
+        if (userToRemove != null)
+        {
+            users.Remove(userToRemove);  // Actually remove the user instead of just setting IsActive to false
+            WriteUsers(users);
+            return true;
+        }
+        return false;
+    }
+
+    public bool UpdateUserRole(string fingerprint, string role)
+    {
+        var users = ReadUsers();
+        var user = users.FirstOrDefault(u => u.Fingerprint == fingerprint);
+        if (user != null)
+        {
+            user.Role = role;
+            WriteUsers(users);
+            return true;
+        }
+        return false;
+    }
+
+    public List<CertificateUser> GetAllUsers()
+    {
+        return ReadUsers();
+    }
+}
+
+public class UserConfig
+{
+    public List<CertificateUser> Users { get; set; } = new();
+}

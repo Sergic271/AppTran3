@@ -1,0 +1,55 @@
+@model List<X509Certificate2>
+@using System.Security.Cryptography.X509Certificates
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">Выбор сертификата</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        @foreach (var cert in Model)
+        {
+            var subjectInfo = cert.Subject.Split(',')
+                .Select(part => part.Trim().Split('='))
+                .ToDictionary(split => split[0], split => split[1]);
+                
+            var validFrom = cert.NotBefore.ToString("dd.MM.yyyy");
+            var validTo = cert.NotAfter.ToString("dd.MM.yyyy");
+            
+            <div class="certificate-item p-3 mb-2 @(cert == Model.First() ? "border rounded" : "")" 
+                 style="cursor: pointer; @(cert == Model.First() ? "background-color: #4C6E99; color: white;" : "")">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-certificate me-3 mt-1"></i>
+                    <div>
+                        <div class="fw-bold">@subjectInfo["CN"]</div>
+                        <div class="small">ИНН: @(subjectInfo.GetValueOrDefault("INN", "Не указан"))</div>
+                        <div class="small">Издатель: @(subjectInfo.GetValueOrDefault("O", "Не указан"))</div>
+                        <div class="small">Действителен: с @validFrom по @validTo</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="selectCertificate">ОК</button>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('.certificate-item').click(function() {
+        $('.certificate-item').removeClass('border rounded').css({'background-color': '', 'color': ''});
+        $(this).addClass('border rounded').css({'background-color': '#4C6E99', 'color': 'white'});
+    });
+    
+    $('#selectCertificate').click(function() {
+        var selectedCert = $('.certificate-item.border');
+        if (selectedCert.length) {
+            // Handle certificate selection
+            $('#certificateModal').modal('hide');
+            // Add your certificate selection logic here
+        }
+    });
+});
+</script>

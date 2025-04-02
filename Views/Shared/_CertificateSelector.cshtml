@@ -1,0 +1,37 @@
+@model List<CertificateInfo>
+@foreach (var cert in Model)
+{
+    <div class="certificate-option p-3">
+        <input type="radio" name="certificateThumbprint" value="@cert.Thumbprint" />
+        <span style="font-weight: bold; color: black;">@cert.SubjectName</span>
+        <br />
+        <span style="color: #006400;">Отпечаток(thumbprint): </span>@cert.Thumbprint
+        <br />
+        <span style="color: #006400;">ИНН: </span>@cert.INN
+        <br />
+        <span style="color: #8B4513;">Издатель: </span>@(cert.Issuer?.Replace("\"", ""))
+        <br />
+        <span>Действителен с @cert.NotBefore.ToString("dd.MM.yyyy") по @cert.NotAfter.ToString("dd.MM.yyyy")</span>
+    </div>
+}
+
+<div style="text-align: center; margin-top: 20px;">
+    <button type="submit" class="btn btn-primary">Войти</button>
+</div>
+
+<style>
+    .certificate-option {
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+        background-color: white;
+    }
+
+        .certificate-option:first-child {
+            border-radius: 4px 4px 0 0;
+        }
+
+        .certificate-option:last-child {
+            border-radius: 0 0 4px 4px;
+            margin-bottom: 0;
+        }
+</style>

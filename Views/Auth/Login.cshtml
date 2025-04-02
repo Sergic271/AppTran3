@@ -1,0 +1,42 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Перевод заявок в КПС РТЗ";
+}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Вход в систему</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Name" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Login" class="form-label">Имя пользователя</label>
+                            <input asp-for="Login" class="form-control" required />
+                            <span asp-validation-for="Login" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label">Пароль</label>
+                            <input asp-for="Password" type="password" class="form-control" required />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary" style="background-color: #4C6E99; border-color: #4C6E99;">Войти</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

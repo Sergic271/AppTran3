@@ -1,0 +1,189 @@
+@model List<ADUser>
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5>Пользователи</h5>
+    </div>
+    <div class="modal-body p-3" style="height: auto; max-height: 80vh; overflow-y: auto;">
+        <div class="mb-4">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Полное имя</th>
+                        <th>Доменное имя</th>
+                        <th>Роль</th>
+                        <th>Статус</th>
+                        <th>Последний вход</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>@user.FullName</td>
+                            <td><span class="text-monospace small">@user.DomainUsername</span></td>
+                            <td>
+                                <select class="form-control-2" onchange="updateRole('@user.DomainUsername', this.value)">
+                                    @if (user.Role == "User")
+                                    {
+                                        <option value="User" selected>Пользователь</option>
+                                        <option value="Admin">Администратор</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="User">Пользователь</option>
+                                        <option value="Admin" selected>Администратор</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <span class="badge @(user.IsActive ? "bg-success" : "bg-danger")">
+                                    @(user.IsActive ? "Активный" : "Неактивный")
+                                </span>
+                            </td>
+                            <td>@(user.LastLoginDate?.ToString("g") ?? "Никогда")</td>
+                            <td>
+                                @if (!user.IsActive)
+                                {
+                                    <button class="btn btn-success btn-sm" onclick="activateUser('@user.DomainUsername')">
+                                        Активировать
+                                    </button>
+                                }
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser('@user.DomainUsername')">
+                                    Удалить
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div>
+            <h6>Добавить нового пользователя</h6>
+            <form id="addUserForm">
+                @Html.AntiForgeryToken()
+                <div class="mb-2">
+                    <label>Доменное имя пользователя</label>
+                    <input type="text" class="form-control-3" name="domainUsername" required placeholder="DOMAIN\Username" />
+                </div>
+                <div class="mb-2">
+                    <label>Полное имя</label>
+                    <input type="text" class="form-control-3" name="fullName" required />
+                </div>
+                <div class="mb-2">
+                    <label>Роль</label>
+                    <div class="select-wrapper">
+                        <select name="role" class="form-control-3" required>
+                            <option value="User">Пользователь</option>
+                            <option value="Admin">Администратор</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" style="background-color: #4C6E99; border-color: #4C6E99;" class="btn btn-primary">Добавить</button>
+            </form>
+        </div>
+    </div>
+    <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary" style="background-color: #4C6E99; border-color: #4C6E99;" data-bs-dismiss="modal">Закрыть</button>
+    </div>
+</div>
+
+<script>
+    async function updateRole(domainUsername, role) {
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            await fetch('/Admin/UpdateRole', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ domainUsername, role })
+            });
+            refreshAdminPanel();
+        } catch (error) {
+            console.error('Error updating role:', error);
+            alert('Ошибка обновления роли: ' + error.message);
+        }
+    }
+
+    async function activateUser(domainUsername) {
+        if (confirm('Активировать пользователя?')) {
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                await fetch('/Admin/ActivateUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify({ domainUsername })
+                });
+                refreshAdminPanel();
+            } catch (error) {
+                console.error('Error activating user:', error);
+                alert('Ошибка активации пользователя: ' + error.message);
+            }
+        }
+    }
+
+    async function deleteUser(domainUsername) {
+        if (confirm('Вы уверены, что хотите удалить пользователя?')) {
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                await fetch('/Admin/DeleteUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify({ domainUsername })
+                });
+                refreshAdminPanel();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Ошибка удаления пользователя: ' + error.message);
+            }
+        }
+    }
+
+    async function refreshAdminPanel() {
+        try {
+            const response = await fetch('/Admin/GetUsers');
+            const content = await response.text();
+            $('#adminModalContent').html(content);
+        } catch (error) {
+            console.error('Error refreshing panel:', error);
+            alert('Ошибка обновления панели: ' + error.message);
+        }
+    }
+
+    document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const form = e.target;
+            const formData = new FormData(form);
+
+            const response = await fetch('/Admin/AddUser', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to add user: ${errorText}`);
+            }
+
+            await refreshAdminPanel();
+            form.reset();
+        } catch (error) {
+            console.error('Error adding user:', error);
+            alert('Ошибка добавления пользователя: ' + error.message);
+        }
+    });
+</script>

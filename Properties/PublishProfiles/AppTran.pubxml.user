@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121.
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA6EH5giI+4UCzZvAiDY6kZwAAAAACAAAAAAADZgAAwAAAABAAAACr0au0I/KNpLJxCLonlvRtAAAAAASAAACgAAAAEAAAAAi5CGA0rRcH4GfWkGYtF7oQAAAAvVD98Of3Jr9hsUcfcnf9xhQAAAAS0delFxfbjF9oG46lI+B08iLEow==</EncryptedPassword>
+    <History>True|2025-03-20T09:32:47.7067642Z||;True|2025-03-20T12:08:55.0402574+03:00||;True|2025-03-20T12:06:19.9619742+03:00||;False|2025-03-19T14:13:52.6161047+03:00||;False|2025-03-19T13:51:33.6045797+03:00||;False|2025-03-19T13:44:01.7942873+03:00||;True|2025-02-06T12:02:30.3660646+03:00||;True|2025-02-04T18:50:31.8674613+03:00||;True|2025-02-04T18:37:37.1215422+03:00||;True|2025-02-04T18:33:58.4781781+03:00||;True|2025-02-04T18:25:57.7154218+03:00||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="MsSqlConnection">
+      <Value>Server=195.209.177.236,1433%3bDatabase=kps_rtz%3bUser Id=kpsrtz_login%3bPassword=8G6d_cb^3nl%40xk0%3bTrustServerCertificate=True%3bEncrypt=False%3bIntegrated Security=False%3bPacket Size=8000%3b</Value>
+    </DestinationConnectionStrings>
+    <DestinationConnectionStrings Include="OracleConnection">
+      <Value>Data Source=89.1.11.105:1521/OPTRPV%3bUser Id=TM_DM3%3bPassword=siemens%3bConnection Lifetime=60%3bPooling=false%3b</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+</Project>

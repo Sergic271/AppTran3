@@ -1,0 +1,78 @@
+// Controllers/AuthController.cs
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using AppTran.Services;
+using System.Security.Cryptography.X509Certificates;
+
+public class AuthController : Controller
+{
+    private readonly ICertificateService _certificateService;
+    private readonly IUserService _userService;
+    private readonly ILogger<AuthController> _logger;
+
+    public AuthController(
+        ICertificateService certificateService,
+        IUserService userService,
+        ILogger<AuthController> logger)
+    {
+        _certificateService = certificateService;
+        _userService = userService;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> Login()
+    {
+        var clientCertificate = await HttpContext.Connection.GetClientCertificateAsync();
+        var certificates = await _certificateService.GetAvailableCertificates();
+        return View(certificates);
+    }
+
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return RedirectToAction("Login");
+    }
+
+
+    [HttpPost]
+    public async Task<IActionResult> Login(string certificateThumbprint)
+    {
+        _logger.LogInformation($"Login attempt with thumbprint: {certificateThumbprint}");
+        var user = _userService.AuthenticateUser(certificateThumbprint);
+        _logger.LogInformation($"User found: {user != null}");
+
+        var certificatesResponse = await _certificateService.GetAvailableCertificates();
+        _logger.LogInformation($"Available certificates: {string.Join(", ", certificatesResponse.Select(c => c.Thumbprint))}");
+        _logger.LogInformation($"User lookup result - Found: {user != null}, Fingerprint: {certificateThumbprint}");
+
+        if (user == null)
+        {
+            _logger.LogWarning("Authentication failed");
+            //return RedirectToAction(actionName: "showAccessDenied");
+            return View("AccessDenied");
+        }
+
+        _logger.LogInformation($"Authenticated user: {user.FullName}, Role: {user.Role}");
+
+        // Set authentication cookie with claims
+        _logger.LogInformation($"Setting claims for user: {user.FullName}");
+        var claims = new List<Claim>
+{
+    new Claim(ClaimTypes.Name, user.FullName),
+    new Claim(ClaimTypes.Role, user.Role),
+    new Claim("Fingerprint", user.Fingerprint)
+};
+        _logger.LogInformation($"Claims created: {string.Join(", ", claims.Select(c => $"{c.Type}: {c.Value}"))}");
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity));
+
+        return RedirectToAction("Index", "Home");
+    }
+
+
+
+}

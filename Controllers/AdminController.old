@@ -1,0 +1,109 @@
+// Controllers/AdminController.cs
+using Microsoft.AspNetCore.Mvc;
+
+[Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+public class AdminController : Controller
+{
+    private readonly IUserService _userService;
+    private readonly ICertificateService _certificateService;
+
+    public AdminController(IUserService userService, ICertificateService certificateService)
+    {
+        _userService = userService;
+        _certificateService = certificateService;
+    }
+
+    [HttpGet]
+    public IActionResult GetUsers()
+    {
+        var users = _userService.GetAllUsers();
+        return PartialView("_AdminPanel", users);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAvailableCertificates()
+    {
+        var certificates = await _certificateService.GetAvailableCertificates();
+        var result = certificates.Select(c => new
+        {
+            fingerprint = c.Thumbprint,
+            subject = c.SubjectName
+        });
+        return Json(result);
+    }
+
+    [HttpPost]
+    public IActionResult AddUser([FromForm] CertificateUser user)
+    {
+        user.CreatedDate = DateTime.Now;
+        user.IsActive = true;
+        user.Fingerprint = user.Fingerprint?.Replace(" ", ""); // Clean whitespace
+
+        _userService.AddUser(user);
+        return Ok();
+    }
+
+    [HttpPost]
+    public IActionResult ActivateUser(string fingerprint)
+    {
+        var user = _userService.GetAllUsers().FirstOrDefault(u => u.Fingerprint == fingerprint);
+        if (user != null)
+        {
+            user.IsActive = true;
+            _userService.UpdateUserRole(fingerprint, user.Role);
+        }
+        return RedirectToAction("GetUsers");
+    }
+
+    [HttpPost]
+    public IActionResult DeleteUser([FromBody] DeleteUserModel model)
+    {
+        if (_userService.RemoveUser(model.Fingerprint))
+        {
+            return Ok();
+        }
+        return BadRequest("Failed to delete user");
+    }
+
+    [HttpPost]
+    public IActionResult UpdateRole([FromBody] UpdateRoleModel model)
+    {
+        _userService.UpdateUserRole(model.Fingerprint, model.Role);
+        return Ok();
+    }
+
+    //[HttpPost]
+    //public IActionResult DeleteUser([FromBody] DeleteUserModel model)
+    //{
+    //    _userService.RemoveUser(model.Fingerprint);
+    //    return Ok();
+    //}
+
+    [HttpPost]
+    public IActionResult ActivateUser([FromBody] ActivateUserModel model)
+    {
+        var user = _userService.GetAllUsers().FirstOrDefault(u => u.Fingerprint == model.Fingerprint);
+        if (user != null)
+        {
+            user.IsActive = true;
+            _userService.UpdateUserRole(model.Fingerprint, user.Role);
+        }
+        return Ok();
+    }
+}
+
+public class UpdateRoleModel
+{
+    public string Fingerprint { get; set; }
+    public string Role { get; set; }
+}
+
+public class DeleteUserModel
+{
+    public string Fingerprint { get; set; }
+}
+
+public class ActivateUserModel
+{
+    public string Fingerprint { get; set; }
+}

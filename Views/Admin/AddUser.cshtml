@@ -1,0 +1,50 @@
+@model CertificateUser
+
+<div class="container mt-4">
+    <h2>Add New User</h2>
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="AddUser" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Certificate Selection</label>
+                    <select name="certificateId" class="form-control" id="certificateSelect">
+                        <option value="">Select a certificate...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" name="fullName" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Role</label>
+                    <select name="role" class="form-control">
+                        <option value="User">User</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Add User</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/Admin/GetAvailableCertificates');
+                const certificates = await response.json();
+                
+                const select = document.getElementById('certificateSelect');
+                certificates.forEach(cert => {
+                    const option = document.createElement('option');
+                    option.value = cert.fingerprint;
+                    option.textContent = cert.subject;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading certificates:', error);
+            }
+        });
+    </script>
+}

@@ -1,0 +1,112 @@
+@model List<CertificateUser>
+
+<div class="container mt-4">
+    <h2>Управление пользователями</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Текущие пользователи</h4>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Полное имя</th>
+                        <th>Сертификат</th>
+                        <th>Роль</th>
+                        <th>Статус</th>
+                        <th>Последний вход</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+
+                    {
+                        <tr>
+                            <td>@user.FullName</td>
+                            <td><span class="text-monospace">@user.Fingerprint</span></td>
+                            <td>
+                                <form asp-action="UpdateRole" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="fingerprint" value="@user.Fingerprint" />
+                                    <select name="role" class="form-control" onchange="this.form.submit()">
+                                        <option value="User" selected="@(user.Role == "User")">Пользователь</option>
+                                        <option value="Admin" selected="@(user.Role == "Admin")">Администратор</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td>
+                                <span class="badge @(user.IsActive ? "bg-success" : "bg-danger")">
+                                    @(user.IsActive ? "Активный" : "Неактивный")
+                                </span>
+                            </td>
+                            <td>@(user.LastLoginDate?.ToString("g") ?? "Никогда")</td>
+                            <td>
+                                <form asp-action="@(user.IsActive ? "RemoveUser" : "ActivateUser")"
+                                      method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="fingerprint" value="@user.Fingerprint" />
+                                    <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-danger" : "btn-success")"
+                                            onclick="return confirm('Вы уверены?')">
+                                        @(user.IsActive ? "Деактивировать" : "Активировать")
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4>Добавить нового пользователя</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="AddUser" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label class="form-label">Выбор сертификата</label>
+                    <select name="certificateId" class="form-control" id="certificateSelect">
+                        <option value="">Выберите сертификат...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Полное имя</label>
+                    <input type="text" class="form-control" name="fullName" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Роль</label>
+                    <select name="role" class="form-control">
+                        <option value="User">Пользователь</option>
+                        <option value="Admin">Администратор</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Добавить</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/Admin/GetAvailableCertificates');
+                const certificates = await response.json();
+
+                const select = document.getElementById('certificateSelect');
+                certificates.forEach(cert => {
+                    const option = document.createElement('option');
+                    option.value = cert.fingerprint;
+                    option.textContent = cert.subject;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading certificates:', error);
+            }
+        });
+    </script>
+}

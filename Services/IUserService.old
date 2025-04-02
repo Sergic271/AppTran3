@@ -1,0 +1,10 @@
+// Services/IUserService.cs
+public interface IUserService
+{
+    CertificateUser AuthenticateUser(string fingerprint);
+    bool AddUser(CertificateUser user);
+    bool RemoveUser(string fingerprint);
+    bool UpdateUserRole(string fingerprint, string role);
+    bool ActivateUser(string fingerprint);
+    List<CertificateUser> GetAllUsers();
+}

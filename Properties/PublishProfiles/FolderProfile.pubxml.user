@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121.
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <_PublishTargetUrl>C:\NGINX2\nginx-1.26.3\html\AppTran</_PublishTargetUrl>
+    <History>True|2025-02-10T14:36:25.7596102Z||;True|2025-02-10T16:59:44.5531800+03:00||;True|2025-02-10T16:31:08.5870273+03:00||;True|2025-02-10T12:13:25.2596343+03:00||;True|2025-02-10T12:08:22.0372082+03:00||;False|2025-02-10T12:07:44.1207364+03:00||;True|2025-02-10T11:59:25.1679783+03:00||;True|2025-02-10T11:57:30.0853943+03:00||;False|2025-02-10T11:44:01.3237828+03:00||;True|2025-02-10T11:36:04.0983550+03:00||;True|2025-02-07T17:43:18.9583790+03:00||;True|2025-02-07T17:35:20.4158744+03:00||;True|2025-02-07T17:34:05.0864519+03:00||;True|2025-02-07T17:24:20.8630184+03:00||;True|2025-02-07T17:07:05.7306381+03:00||;True|2025-02-07T13:49:56.8441418+03:00||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="MsSqlConnection">
+      <Value>Server=195.209.177.236,1433%3bDatabase=kps_rtz%3bUser Id=kpsrtz_login%3bPassword=8G6d_cb^3nl%40xk0%3bTrustServerCertificate=True%3bEncrypt=False%3bIntegrated Security=False%3bPacket Size=8000%3b</Value>
+    </DestinationConnectionStrings>
+    <DestinationConnectionStrings Include="OracleConnection">
+      <Value>Data Source=89.1.11.105:1521/OPTRPV%3bUser Id=TM_DM3%3bPassword=siemens%3bPooling=true%3b</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,1305 @@
+﻿@{
+
+    ViewData["Title"] = "Перевод заявок КПС РТЗ";
+
+}
+
+<style>
+
+    .container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 1100px;
+        padding: 0;
+    }
+
+
+
+    /* .button-container {
+
+            display: flex;
+
+            justify-content: center;
+
+            width: 100%;
+
+            margin-top: 20px;
+
+            padding: 5;
+
+
+
+        } */
+
+
+
+    /*  .button-container {
+
+            display: flex;
+
+            justify-content: center;
+
+            width: 1100px;
+
+            margin-top: 20px;
+
+        } */
+
+
+    .button-container {
+        display: flex;
+        justify-content: center;
+        width: 1100px;
+    }
+
+
+
+    .expandable-input, .form-control {
+        width: 1100px !important;
+        min-width: 1100px !important;
+        margin-left: 0;
+        /* padding: 12px; */
+
+        height: calc(1.5em + 0.75rem + 2px);
+        min-height: calc(1.5em + 0.75rem + 2px);
+        max-height: none;
+        overflow-y: auto;
+        resize: none;
+        white-space: pre;
+        line-height: 1.5;
+    }
+
+
+
+    #searchResults, .dropdown-item, .dropdown-header, .search-row {
+        width: 1100px !important;
+        min-width: 1100px !important;
+        overflow-x: hidden;
+    }
+
+
+
+    /* #searchResults {
+
+            overflow-x: hidden;
+
+            padding-right: 0;
+
+        } */
+
+
+
+    .dropdown-item {
+        padding-right: 0;
+    }
+
+
+
+
+
+    .dropdown-menu {
+        max-height: calc(1.5em + 0.75rem + 2px);
+        overflow-y: auto;
+    }
+
+
+
+    #modalMessage ul {
+        margin: 0;
+        padding: 0;
+    }
+
+
+
+    #modalMessage li {
+        padding: 2px 0;
+        border-bottom: 1px solid #eee;
+        line-height: 1.3;
+    }
+
+
+
+        #modalMessage li:last-child {
+            border-bottom: none;
+        }
+
+
+
+    .modal-body {
+        padding: 0.75rem;
+    }
+
+
+
+    .modal-content {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        border: 2px solid #ccc;
+    }
+
+
+
+    .modal-dialog {
+        margin-top: 80px;
+        transform: matrix3d();
+    }
+
+
+
+    .modal-footer {
+        justify-content: center;
+    }
+
+
+
+    #copyResults:focus {
+        box-shadow: none;
+        outline: none;
+    }
+
+
+
+    .modal-backdrop {
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out !important;
+    }
+
+
+
+        .modal-backdrop.show {
+            opacity: 0.4 !important;
+        }
+
+
+
+    body.modal-open .modal-backdrop {
+        display: block !important;
+    }
+
+
+
+    #resultModal {
+        transition: opacity 0.3s ease-in-out !important;
+    }
+
+
+
+        #resultModal.fade {
+            transition: opacity 0.3s ease-in-out !important;
+        }
+
+
+
+            #resultModal.fade .modal-dialog {
+                transform: none !important; /* Remove sliding animation */
+
+                transition: opacity 0.3s ease-in-out !important;
+            }
+
+
+
+
+
+        #resultModal ~ .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6) !important; /* Darker background */
+        }
+
+
+
+        #resultModal .modal-content {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+
+
+        #resultModal.show .modal-dialog {
+            transform: none !important; /* Remove sliding animation */
+        }
+
+
+    #submitButton {
+        width: 150px;
+        margin: 0 auto;
+        background-color: #4C6E99;
+        border-color: #4C6E99;
+    }
+
+
+
+        #submitButton:hover {
+            background-color: #3d5a7d;
+            border-color: #3d5a7d;
+        }
+
+
+
+   
+    .search-row {
+        display: grid;
+        grid-template-columns: 300px 250px 200px 350px;
+        width: 100%;
+        margin-right: 0;
+        padding-right: 0;
+    }
+
+
+
+    .search-col {
+        padding: 0 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        font-size: 0.85rem;
+    }
+
+
+
+    
+    .dropdown-header {
+        position: sticky;
+        top: -2%;
+        background-color: white;
+        z-index: 1;
+        border-bottom: 1px solid #ddd;
+    }
+
+
+
+
+
+    #applicationNumber {
+        position: relative;
+        z-index: 2;
+        background: transparent;
+    }
+
+
+
+    .form-group {
+        margin-bottom: 15px;
+        text-align: left;
+        margin-left: 0;
+        padding-left: 0;
+        position: relative;
+    }
+
+
+
+        .form-group label {
+            margin-bottom: 5px;
+            text-align: left;
+            width: 100%;
+        }
+
+
+
+    .clear-input {
+        position: absolute;
+        right: -25px;
+        top: 42px;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #999;
+        padding: 5px;
+        display: none;
+        z-index: 3;
+        font-size: 1.5rem;
+        width: 20px;
+        height: 20px;
+        text-align: center;
+        line-height: 20px;
+        border-radius: 50%;
+    }
+
+
+
+        .clear-input:hover {
+            color: #666;
+            background-color: #f0f0f0;
+        }
+
+
+    #clearApplicationNumber {
+        position: absolute;
+        right: -25px;
+        top: 42px; /* Adjust for better vertical alignment */
+        transform: translateY(-50%);
+        z-index: 3;
+        font-size: 1.5rem;
+        width: 20px;
+        height: 20px;
+    }
+    }
+
+        #clearApplicationNumber:hover {
+            color: #666;
+            background-color: #f0f0f0;
+        }
+
+
+    .input-container {
+        justify-content: flex-start;
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+
+
+    .btn-primary {
+        margin-top: 20px;
+    }
+
+
+
+    .col-md-9 {
+        width: 100%;
+    }
+
+</style>
+
+
+
+
+
+}
+
+<div class="container">
+
+    <div class="col-md-9">
+
+        <div class="form-group mb-3">
+
+            <label for="applicationNumber">Заявки</label>
+
+            <span class="clear-input" id="clearApplicationNumber">&times;</span>
+
+            <textarea id="applicationNumber" class="form-control expandable-input" placeholder="Вставьте или введите номера заявок через пробел" spellcheck="false"></textarea>
+
+        </div>
+
+
+
+        <div class="form-group mb-3">
+
+            <label for="transferTo">Кому перевести</label>
+
+            <div class="input-container">
+
+                <input type="text" id="transferTo" class="form-control" autocomplete="off" />
+
+                <span class="clear-input" id="clearTransferTo">&times;</span>
+                                
+                <div id="searchResults" class="dropdown-menu w-100"></div>
+
+            </div>
+
+        </div>
+
+
+               
+        <div class="button-container">
+
+            <button id="submitButton" style="background-color: #4C6E99; border-color: #4C6E99;" class="btn btn-primary">Перевести</button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="modal fade" id="resultModal" tabindex="-1" style="margin-top: 160px;">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content" style="border: 2px solid #ccc;">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">Результаты</h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div id="modalMessage" style="max-height: 400px; overflow-y: auto;"></div>
+
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+
+                <button type="button" class="btn btn-link invisible">
+
+                    <i class="fas fa-copy"></i>
+
+                </button>
+
+                <button type="button" style="background-color: #4C6E99; border-color: #4C6E99;" class="btn btn-primary" data-bs-dismiss="modal" id="modalOkButton">OK</button>
+
+                <button type="button" class="btn btn-link" id="copyResults" style="border: none; background: none; outline: none;">
+
+                    <i class="fas fa-copy" style="color: #808080;"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+@section Scripts {
+
+    <script type="text/javascript">
+
+
+
+        function hasValidApplicationNumbers() {
+
+            const numbers = $('#applicationNumber').val()
+
+                .split(/[\s\n]+/)
+
+                .filter(n => n.length === 10 && /^\d{10}$/.test(n));
+
+            return numbers.length > 0;
+
+        }
+
+
+
+        jQuery(function ($) {
+
+            var lastValue = '';
+
+            var searchTimeout;
+
+            var currentRequest;
+
+            var currentYear = new Date().getFullYear();
+
+            $('#applicationNumber').focus();
+
+            // Input event handler for transferTo
+
+
+
+            $('#transferTo').on('input keypress', function (e) {
+
+                if (!hasValidApplicationNumbers()) {
+
+                    e.preventDefault();
+
+                    $(this).val('');  // Clear any input attempt
+
+                    $('#searchResults').hide();
+
+                    myFunction();
+
+                    alert('Пожалуйста, введите номер заявки');
+
+                    $('#applicationNumber').focus();
+
+                    return false;
+
+                }
+
+            });
+
+
+
+
+
+            // Add transferTo click/focus/keydown handler
+
+            $('#transferTo').on('click focus keydown', function (e) {
+
+                if (!hasValidApplicationNumbers()) {
+
+                    e.preventDefault();
+
+                    myFunction();
+
+                    alert('Пожалуйста, введите номер заявки');
+                    
+                    $('#applicationNumber').focus();
+
+                    return false;
+
+                }
+
+            });
+
+
+
+            $('#applicationNumber').on('input', function () {
+
+                // Reset height to auto to get the correct scrollHeight
+
+                this.style.height = 'calc(1.5em + 0.75rem + 2px)'; // Reset to single line
+
+                //this.style.height = 'auto';
+
+
+
+                // Set new height based on scrollHeight, but respect max-height via CSS
+
+                this.style.height = (this.scrollHeight) + 'px';
+
+
+
+                // Clean up input (remove extra spaces, etc.)
+
+                var currentValue = this.value;
+
+                var hasTrailingSpace = currentValue.endsWith(' ');
+
+                var numbers = Array.from(new Set(currentValue.split(' ').filter(n => n)));
+
+                this.value = numbers.join(' ') + (hasTrailingSpace ? ' ' : '');
+
+            });
+
+            $('#applicationNumber').on('input', function () {
+                $('#clearApplicationNumber').toggle($(this).val().length > 0);
+            });
+
+            $('#clearApplicationNumber').on('click', function () {
+                $('#applicationNumber').val('').css('height', 'calc(1.5em + 0.75rem + 2px)');
+                $(this).hide();
+                $('#applicationNumber').focus();
+            });
+
+
+
+            $('#applicationNumber').on('keypress', function (e) {
+
+                var char = String.fromCharCode(e.which);
+
+                var currentValue = this.value;
+
+                var numbers = currentValue.split(' ');
+
+                var currentNumber = numbers[numbers.length - 1] || '';
+
+
+
+                if (!/[\d\s]/.test(char)) {
+
+                    e.preventDefault();
+
+                    return;
+
+                }
+
+
+
+                if (char === ' ') {
+
+                    if (currentNumber.length === 10) {
+
+                        return;
+
+                    }
+
+                    e.preventDefault();
+
+                    return;
+
+                }
+
+
+
+                if (/\d/.test(char)) {
+
+                    if (!currentNumber) {
+
+                        if (char !== '2') {
+
+                            e.preventDefault();
+
+                        }
+
+                    }
+
+                    else if (currentNumber.length === 1) {
+
+                        if (char !== '0') {
+
+                            e.preventDefault();
+
+                        }
+
+                    }
+
+                    else if (currentNumber.length === 2) {
+
+                        var currentYearThirdDigit = parseInt(currentYear.toString()[2]);
+
+                        if (parseInt(char) > currentYearThirdDigit) {
+
+                            e.preventDefault();
+
+                        }
+
+                    }
+
+                    else if (currentNumber.length === 3) {
+
+                        var potentialYear = parseInt(currentNumber + char);
+
+                        if (potentialYear > currentYear) {
+
+                            e.preventDefault();
+
+                        }
+
+                    }
+
+                    else if (currentNumber.length === 4) {
+
+                        if (!['1', '5', '7', '8'].includes(char)) {
+
+                            e.preventDefault();
+
+                        }
+
+                    }
+
+                    else if (currentNumber.length >= 10) {
+
+                        e.preventDefault();
+
+                    }
+
+                }
+
+            });
+
+                       
+
+            $('#applicationNumber').on('paste', function (e) {
+
+                e.preventDefault();
+
+
+
+                var pastedText = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
+
+                var currentValue = $(this).val();
+
+                var selectionStart = this.selectionStart;
+
+                var selectionEnd = this.selectionEnd;
+
+                var hasSelection = selectionStart !== selectionEnd;
+
+                var currentYear = new Date().getFullYear();
+
+
+
+                // If there is selected text, replace it
+
+                if (hasSelection) {
+
+                    var beforeSelection = currentValue.substring(0, selectionStart);
+
+                    var afterSelection = currentValue.substring(selectionEnd);
+
+                    currentValue = beforeSelection + ' ' + pastedText + ' ' + afterSelection;
+
+                } else {
+
+                    currentValue = currentValue + ' ' + pastedText;
+
+                }
+
+
+
+                // Use regex to find all 10-digit numbers
+
+                var numberRegex = /\D*(\d{10})\D*/g;
+
+                var matches = currentValue.match(numberRegex) || [];
+
+
+
+                // Extract and validate numbers
+
+                var numbers = Array.from(new Set(
+
+                    matches.map(match => {
+
+                        let num = match.match(/\d{10}/)[0];
+
+                        return num;
+
+                    })
+
+                        .filter(n => {
+
+                            if (!n.startsWith('201') && !n.startsWith('202')) return false;
+
+                            var fourthDigit = parseInt(n[3]);
+
+                            var currentYearFourthDigit = parseInt(currentYear.toString()[3]);
+
+                            if (fourthDigit > currentYearFourthDigit) return false;
+
+                            if (!['1', '5', '7', '8'].includes(n[4])) return false;
+
+                            return true;
+
+                        })
+
+                ));
+
+
+
+                // Format numbers
+
+                var formattedNumbers = numbers.reduce((acc, num, i) => {
+
+                    if (i > 0 && i % 10 === 0) {
+
+                        return acc + '\n' + num;
+
+                    }
+
+                    return acc + (i % 10 === 0 ? '' : ' ') + num;
+
+                }, '').trim();
+
+
+
+                $(this).val(formattedNumbers);
+
+
+
+                // Adjust height
+
+                this.style.height = 'calc(1.5em + 0.75rem + 2px)';
+
+                this.style.height = Math.min(this.scrollHeight, window.innerHeight * 0.8) + 'px';
+
+            });
+
+
+
+            // Submit button
+
+            $('#submitButton').on('click', async function (e) {
+
+                e.preventDefault();
+
+
+
+                var applicationNumbers = $('#applicationNumber').val()
+
+                    .split(/[\s\n]+/)  // Split on whitespace or newlines
+
+                    .map(num => num.trim())  // Trim each number
+
+                    .filter(num => num.length === 10); // Keep only valid 10-digit numbers
+
+
+
+                console.log("Application numbers:", applicationNumbers);
+
+
+
+                var $transferTo = $('#transferTo');
+
+                var recipientId = $transferTo.data('id');  // Add this line to get recipientId
+
+
+
+                if (!applicationNumbers.length) {
+
+                    showModal('Error', 'Введите корректные номера заявок');
+
+                    return;
+
+                }
+
+
+
+                if (!recipientId) {
+
+                    showModal('Error', 'Укажите ФИО того, кому переводить');
+
+                    return;
+
+                }
+
+
+
+                $(this).prop('disabled', true);
+
+
+
+                let results = [];  // Array to collect all results
+
+
+
+                try {
+
+                    for (const number of applicationNumbers) {
+
+                        try {
+
+                            const result = await $.ajax({
+
+                                url: '/Home/TransferApplication',
+
+                                type: 'POST',
+
+                                data: {
+
+                                    applicationNumber: number,
+
+                                    applicantId: recipientId
+
+                                }
+
+                            });
+
+
+
+                            if (result.success) {
+
+                                results.push(`${number} переведена в ЛК ${result.newOwnerName}\n`);
+
+                            } else {
+
+                                switch (result.error) {
+
+                                    case 'NotFound':
+
+                                        results.push(`${result.applicationNumber}: не найдена\n`);
+
+                                        break;
+
+                                    case 'ProcessingOver':
+
+                                        results.push(`${result.applicationNumber}: делопроизводство завершено, перевод невозможен\n`);
+
+                                        break;
+
+                                    default:
+
+                                        results.push(`Error processing ${number}: ${result.message || 'Unknown error'}`);
+
+                                }
+
+                            }
+
+                        } catch (error) {
+
+                            results.push(`Failed to process application ${number}: ${error.message}`);
+
+                        }
+
+                    }
+
+                } finally {
+
+                    $(this).prop('disabled', false);
+
+                    // Show all results in one modal
+
+                    showResultsModal(results);
+
+                }
+
+            });
+
+
+
+            function getOGRNTooltip(ogrn, company) {
+
+                if (!ogrn) return '';
+
+                const digits = ogrn.replace(/\D/g, '');
+
+                if (digits.length === 13) return company || '';
+
+                if (digits.length === 15) return ' Индивидуальный предприниматель ';
+
+                return '';
+
+            }
+
+
+
+            function hasValidApplicationNumbers() {
+
+                const numbers = $('#applicationNumber').val()
+
+                    .split(/[\s\n]+/)
+
+                    .filter(n => n.length === 10 && /^\d{10}$/.test(n));
+
+                return numbers.length > 0;
+
+            }
+
+
+
+
+
+            // Updated modal function to show multiple results
+
+            function showResultsModal(results) {
+
+                const modal = new bootstrap.Modal(document.getElementById('resultModal'), {
+
+                    backdrop: true,  // Enable backdrop
+
+                    keyboard: false
+
+                });
+
+
+
+                // Add backdrop if it doesn't exist
+
+                if (!document.querySelector('.modal-backdrop')) {
+
+                    const backdrop = document.createElement('div');
+
+                    backdrop.className = 'modal-backdrop fade show';
+
+                    document.body.appendChild(backdrop);
+
+                }
+
+
+
+                $('#resultModal .modal-title').text('Результаты');
+
+                const resultsList = results.map(result => `<li>${result}</li>`).join('');
+
+                $('#modalMessage').html(`<ul class="list-unstyled mb-0">${resultsList}</ul>`);
+
+                modal.show();
+
+            }
+
+
+
+            // Handle modal OK button click
+
+            $('#modalOkButton').on('click', function () {
+
+                // Clear application numbers
+
+                $('#applicationNumber').val('').css('height', 'calc(1.5em + 0.75rem + 2px)');;
+
+
+
+                // Clear transferTo input and its data
+
+                $('#transferTo').val('').removeData();
+
+                $('#clearTransferTo').hide();
+
+
+
+                // Hide search results if visible
+
+                $('#searchResults').hide();
+
+
+
+                // Focus on application number input
+
+                $('#applicationNumber').focus();
+
+            });
+
+
+
+            $('#copyResults').on('click', function () {
+
+                const resultsText = $('#modalMessage').text();
+
+                navigator.clipboard.writeText(resultsText).then(() => {
+
+                    const originalIcon = $(this).html();
+
+                    $(this).html('<i class="fas fa-check"></i>');
+
+                    setTimeout(() => {
+
+                        $(this).html(originalIcon);
+
+                    }, 1500);
+
+                });
+
+            });
+
+
+
+            // Show/hide clear button based on input content
+
+            $('#transferTo').on('input', function () {
+
+                if (!hasValidApplicationNumbers()) {
+
+                    $(this).val('');
+
+                    $('#searchResults').hide();
+
+                    myFunction();
+
+                    alert('Пожалуйста, введите номер заявки');
+
+                    $('#applicationNumber').focus();
+
+                    return false;
+
+                }
+
+
+
+                $('#clearTransferTo').toggle($(this).val().length > 0);
+
+
+
+                clearTimeout(searchTimeout);
+
+
+
+                if (currentRequest && currentRequest.state() === 'pending') {
+
+                    currentRequest.abort();
+
+                }
+
+
+
+                var searchText = $(this).val();
+
+
+
+                searchTimeout = setTimeout(function () {
+
+                    if (searchText.length > 0) {
+
+                        currentRequest = $.get('/Home/SearchApplicants', { searchText: searchText })
+
+                            .done(function (result) {
+
+                                var resultHtml = `
+
+                                           <div class="dropdown-header p-2">
+
+                                               <div class="search-row">
+
+                                                   <div class="search-col"><strong>ФИО</strong></div>
+
+                                                   <div class="search-col"><strong>E-mail</strong></div>
+
+                                                   <div class="search-col"><strong>ОГРН/ОГРНИП</strong></div>
+
+                                                   <div class="search-col"><strong>Статус сертификата</strong></div>
+
+                                               </div>
+
+                                           </div>`;
+
+
+
+                                if (result && result.length > 0) {
+
+                                    result.forEach(function (item) {
+
+                                        console.log({
+
+                                            ogrn: item.ogrn,
+
+                                            company: item.company,
+
+                                            condition: item.ogrn && item.ogrn.length === 13,
+
+                                            title: item.ogrn && item.ogrn.length === 13 ? item.company : (item.ogrn && item.ogrn.length === 15 ? 'ИП' : '')
+
+                                        });
+
+
+
+                                        resultHtml += `
+
+                                                   <a class="dropdown-item" href="#"
+
+                                                      data-id="${item.id || ''}"
+
+                                                      data-name="${item.name || ''}"
+
+                                                      data-mail="${item.mail || ''}"
+
+                                                      data-ogrn="${item.ogrn || ''}"
+
+                                                      data-company="${item.company || ''}"
+
+                                                      data-status="${item.certificateStatus || ''}">
+
+                                                       <div class="search-row">
+
+                                                           <div class="search-col" title="${item.name}">${item.name}</div>
+
+                                                           <div class="search-col" title="${item.mail}">${item.mail}</div>
+
+                                                                           <div class="search-col" title="${item.ogrn ?
+
+                                                (item.ogrn.length === 13 && item.company ? item.company.replace(/"/g, '') :
+
+                                                    item.ogrn.length === 15 ? 'Индивидуальный предприниматель' : '')
+
+                                                : ''}">
+
+                                                                                 ${item.ogrn || 'Ôèçëèöî'}
+
+                                                                            </div>
+
+                                                           <div class="search-col" title="${item.certificateStatus}">
+
+                                                               ${item.certificateStatus || ''}
+
+                                                           </div>
+
+                                                       </div>
+
+                                                   </a>`;
+
+                                    });
+
+                                } else {
+
+                                    resultHtml += `
+
+                                               <div class="dropdown-item">
+
+                                                   No results found
+
+                                               </div>`;
+
+                                }
+
+
+
+                                $('#searchResults').html(resultHtml).show();
+
+                            })
+
+                            .fail(function (error) {
+
+                                console.error('Search failed:', error);
+
+                            });
+
+                    } else {
+
+                        $('#searchResults').hide();
+
+                    }
+
+                }, 300);
+
+            });
+
+
+
+            // Clear input and data when clicking the cross
+
+            $('#clearTransferTo').on('click', function () {
+
+                var $input = $('#transferTo');
+
+                $input.val('');  // Clear input value
+
+                $input.removeData();  // Clear all data attributes
+
+                $(this).hide();  // Hide the clear button
+
+                $('#searchResults').hide();  // Hide dropdown
+
+            });
+
+
+
+            // Click handler for dropdown items
+
+            $('#searchResults').on('click', '.dropdown-item', function (e) {
+
+                e.preventDefault();
+
+                var selectedItem = $(this);
+
+                var displayText = selectedItem.data('name');  // Display only name
+
+
+
+                var $input = $('#transferTo');
+
+                $input.val(displayText);
+
+                // Store all data attributes
+
+                $input.data({
+
+                    'id': selectedItem.data('id'),
+
+                    'name': selectedItem.data('name'),
+
+                    'mail': selectedItem.data('mail'),
+
+                    'ogrn': selectedItem.data('ogrn'),
+
+                    'status': selectedItem.data('status')
+
+                });
+
+
+
+                $('#searchResults').hide();
+
+                $('#clearTransferTo').show();  // Show clear button
+
+            });
+
+
+
+            $(document).on('click', function (e) {
+
+                if (!$(e.target).closest('.form-group').length) {
+
+                    $('#searchResults').hide();
+
+                }
+
+            });
+
+        });
+
+    </script>
+
+}
